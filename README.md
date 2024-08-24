@@ -32,11 +32,11 @@ This project is a simple WhatsApp bot that uses `wwebjs.dev` and `Gemini` to res
 
 ## Running the Bot
 To run the bot, use the following command:
-    ```bash
+    ```
     npm run dev
     ```
     or
-    ```bash
+    ```
     nodemon app
     ```
 Then, wait for the QR code to appear. Scan the QR code with your WhatsApp account. Once the "Client is ready" message appears in the terminal, the bot is ready to use.
