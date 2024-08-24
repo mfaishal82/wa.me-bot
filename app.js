@@ -6,8 +6,8 @@ const port = 3000;
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.json({
-        message: 'Hello World!', status: 200
+    res.status(200).json({
+        message: 'Hello World!'
     })
 });
 
