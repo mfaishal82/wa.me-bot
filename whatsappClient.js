@@ -1,9 +1,8 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { Hercai } = require("hercai");
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const herc = new Hercai();
 
 // Create a new client instance
 const client = new Client({
@@ -46,13 +45,14 @@ client.on('message', async (message) => {
             replyText = 'Hello! How can I assist you today?';
         } else if (message.body.toLowerCase() === 'how are you?') {
             replyText = 'I am just a bot, but I am here to help you!';
-        } else if (message.body.toLowerCase() === "assalamu'alaikum") {
+        } else if (message.body.toLowerCase() === "assalamu'alaikum" || message.body.toLowerCase() === "assalamualaikum" || message.body.toLowerCase() === "assalamualaikum warahmatullahi wabarakatuh") {
             replyText = "Wa'alaikumussalam! Ini adalah bot yang menjawab pesan otomatis";
         } else if (message.body.toLowerCase().startsWith('hi bot')) {
-            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-            const result = await model.generateContent(message.body);
-            const response = await result.response;
-            replyText = response.text();
+            const { reply } = await herc.question({
+                model: "v3",
+                content: message.body,
+              });
+            replyText = reply;
         } else {
             return; // If not starting with "Hi Bot", ignore
         }

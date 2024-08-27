@@ -1,13 +1,13 @@
 # wa.me-bot
 
 ## Introduction
-This project is a simple WhatsApp bot that uses `wwebjs.dev` and `Gemini` to respond to received messages. The bot can be easily initialized and can respond to messages using a generative model from Gemini.
+This project is a simple WhatsApp bot that uses `wwebjs.dev` and `Herc.ai` to respond to received messages. The bot can be easily initialized and can respond to messages using a generative model from Herc.ai.
 
 ## Prerequisites
 - Node.js
 - NPM or Yarn
 - WhatsApp account
-- Gemini API Key
+<!-- - API Key -->
 
 ## Installation
 1. Clone this repository:
@@ -25,10 +25,10 @@ This project is a simple WhatsApp bot that uses `wwebjs.dev` and `Gemini` to res
     yarn install
     ```
 
-3. Create a `.env` file in the root directory of the project and add your Gemini API Key:
+<!-- 3. Create a `.env` file in the root directory of the project and add your Gemini API Key:
     ```env
-    GEMINI_API_KEY=your_gemini_api_key_here
-    ```
+    API_KEY=your_api_key_here
+    ``` -->
 
 ## Running the Bot
 To run the bot, use the following command:

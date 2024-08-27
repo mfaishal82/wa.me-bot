@@ -15,7 +15,7 @@
     "axios": "^1.7.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "hercai": "^9.0.2",
+    "hercai": "^12.3.2",
     "next": "^14.2.6",
     "nodemon": "^3.1.4",
     "qrcode-terminal": "^0.12.0",
