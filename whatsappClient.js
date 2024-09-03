@@ -23,14 +23,15 @@ client.on('qr', (qr) => {
 const processedMessages = new Set();
 
 client.on('message', async (message) => {
-    console.log(message.body);
-
+    
     // Ignore messages sent by the bot itself
     if (message.fromMe) return;
-
+    
     // Ignore messages from groups
     if (message.isGroupMsg) return;
-
+    
+    console.log(message.body);
+    
     // Check if the message has already been processed
     if (processedMessages.has(message.id._serialized)) {
         return; // If already processed, ignore
@@ -53,8 +54,12 @@ client.on('message', async (message) => {
                 content: message.body,
               });
             replyText = reply;
+        } else if (message.body.toLowerCase().startsWith('draw image')) {
+            const prompt = message.body.slice(10).trim(); // Extract the prompt after 'draw image'
+            const response = await herc.drawImage({ model: "v3", prompt: prompt, negative_prompt: "" });
+            replyText = `Here is your image: ${response.url}`;
         } else {
-            return; // If not starting with "Hi Bot", ignore
+            return; // If not starting with "Hi Bot" or "draw image", ignore
         }
         await message.reply(replyText);
         console.log(replyText)
