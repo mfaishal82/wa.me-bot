@@ -1,12 +1,16 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const { Hercai } = require("hercai");
+const axios = require('axios');
 
 const herc = new Hercai();
 
 // Create a new client instance
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    }
 });
 
 // When the client is ready, run this code (only once)
@@ -22,15 +26,29 @@ client.on('qr', (qr) => {
 // Object to track processed messages
 const processedMessages = new Set();
 
+// Tambahkan pola URL FB
+const facebookUrlPattern = /https?:\/\/(www\.)?facebook\.com\/.+/;
+
+// Tambahkan pola URL YouTube
+const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
+
+// Tambahkan pola URL Instagram
+const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+/;
+
 client.on('message', async (message) => {
+    const isGroupMsg = message.from.endsWith('@g.us');
     
-    // Ignore messages sent by the bot itself
+    // Hanya tampilkan console.log jika bukan pesan grup
+    if (!isGroupMsg) {
+        console.log('Message type:', {
+            isGroup: isGroupMsg,
+            from: message.from,
+            body: message.body
+        });
+    }
+    
     if (message.fromMe) return;
-    
-    // Ignore messages from groups
-    if (message.isGroupMsg) return;
-    
-    console.log(message.body);
+    if (isGroupMsg) return;
     
     // Check if the message has already been processed
     if (processedMessages.has(message.id._serialized)) {
@@ -48,7 +66,7 @@ client.on('message', async (message) => {
             replyText = 'I am just a bot, but I am here to help you!';
         } else if (message.body.toLowerCase() === "assalamu'alaikum" || message.body.toLowerCase() === "assalamualaikum" || message.body.toLowerCase() === "assalamualaikum warahmatullahi wabarakatuh") {
             replyText = "Wa'alaikumussalam! Ini adalah bot yang menjawab pesan otomatis";
-        } else if (message.body.toLowerCase().startsWith('hi bot')) {
+        } else if (message.body.toLowerCase().startsWith('hai bot')) {
             const { reply } = await herc.question({
                 model: "v3",
                 content: message.body,
@@ -58,6 +76,47 @@ client.on('message', async (message) => {
             const prompt = message.body.slice(10).trim(); // Extract the prompt after 'draw image'
             const response = await herc.drawImage({ model: "v3", prompt: prompt, negative_prompt: "" });
             replyText = `Here is your image: ${response.url}`;
+        } else if (facebookUrlPattern.test(message.body)) {
+            const url = message.body.match(facebookUrlPattern)[0]; // Ekstrak URL Facebook
+            const apiUrl = `https://api.ryzendesu.vip/api/downloader/aiodown?url=${encodeURIComponent(url)}`;
+            
+            const response = await axios.get(apiUrl);
+            if (response.data.success && response.data.quality.length > 0) {
+                // Prioritaskan resolusi HD, lalu SD
+                const preferredQualities = ['hd', 'sd'];
+                const videoData = response.data.quality.find(video => 
+                    preferredQualities.includes(video.quality)
+                );
+
+                if (videoData) {
+                    replyText = `Video tersedia dalam kualitas ${videoData.quality.toUpperCase()}. Anda dapat mengunduhnya di sini: ${videoData.url}`;
+                } else {
+                    replyText = 'Maaf, tidak dapat menemukan video dengan kualitas yang diinginkan.';
+                }
+            } else {
+                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
+            }
+        } else if (youtubeUrlPattern.test(message.body)) {
+            const url = message.body.match(youtubeUrlPattern)[0]; // Ekstrak URL YouTube
+            const apiUrl = `https://api.ryzendesu.vip/api/downloader/ytmp4?url=${encodeURIComponent(url)}`;
+            
+            const response = await axios.get(apiUrl);
+            if (response.data.url) {
+                replyText = `Anda dapat mengunduh video YouTube di sini: ${response.data.url}`;
+            } else {
+                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
+            }
+        } else if (instagramUrlPattern.test(message.body)) {
+            const url = message.body.match(instagramUrlPattern)[0]; // Ekstrak URL Instagram
+            const apiUrl = `https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`;
+            
+            const response = await axios.get(apiUrl);
+            if (response.data.status && response.data.data.length > 0) {
+                const videoData = response.data.data[0];
+                replyText = `Video tersedia. Anda dapat mengunduhnya di sini: ${videoData.url}`;
+            } else {
+                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
+            }
         } else {
             return; // If not starting with "Hi Bot" or "draw image", ignore
         }
