@@ -83,7 +83,7 @@ client.on('message', async (message) => {
             const response = await axios.get(apiUrl);
             if (response.data.success && response.data.quality.length > 0) {
                 // Prioritaskan resolusi HD, lalu SD
-                const preferredQualities = ['hd', 'sd'];
+                const preferredQualities = ['-hd', 'sd'];
                 const videoData = response.data.quality.find(video => 
                     preferredQualities.includes(video.quality)
                 );
