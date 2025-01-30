@@ -2,8 +2,15 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const { Hercai } = require("hercai");
 const axios = require('axios');
-
+const { handleHaiBot, handleDrawImage } = require('./handlers/ai-bot');
+const handleFacebook = require('./handlers/facebookHandler');
+const handleYouTube = require('./handlers/youtubeHandler');
+const handleInstagram = require('./handlers/instagramHandler');
 const herc = new Hercai();
+
+const facebookUrlPattern = /https?:\/\/(www\.)?facebook\.com\/.+/;
+const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
+const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/p\/.+/;
 
 // Create a new client instance
 const client = new Client({
@@ -26,15 +33,6 @@ client.on('qr', (qr) => {
 // Object to track processed messages
 const processedMessages = new Set();
 
-// Tambahkan pola URL FB
-const facebookUrlPattern = /https?:\/\/(www\.)?facebook\.com\/.+/;
-
-// Tambahkan pola URL YouTube
-const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
-
-// Tambahkan pola URL Instagram
-const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+/;
-
 client.on('message', async (message) => {
     const isGroupMsg = message.from.endsWith('@g.us');
     
@@ -47,7 +45,7 @@ client.on('message', async (message) => {
         });
     }
     
-    if (message.fromMe) return;
+    // if (message.fromMe) return;
     if (isGroupMsg) return;
     
     // Check if the message has already been processed
@@ -65,60 +63,19 @@ client.on('message', async (message) => {
         } else if (message.body.toLowerCase() === 'how are you?') {
             replyText = 'I am just a bot, but I am here to help you!';
         } else if (message.body.toLowerCase() === "assalamu'alaikum" || message.body.toLowerCase() === "assalamualaikum" || message.body.toLowerCase() === "assalamualaikum warahmatullahi wabarakatuh") {
-            replyText = "Wa'alaikumussalam! Ini adalah bot yang menjawab pesan otomatis";
-        } else if (message.body.toLowerCase().startsWith('hai bot')) {
-            const { reply } = await herc.question({
-                model: "v3",
-                content: message.body,
-              });
-            replyText = reply;
-        } else if (message.body.toLowerCase().startsWith('draw image')) {
-            const prompt = message.body.slice(10).trim(); // Extract the prompt after 'draw image'
-            const response = await herc.drawImage({ model: "v3", prompt: prompt, negative_prompt: "" });
-            replyText = `Here is your image: ${response.url}`;
+            replyText = "Wa'alaikumussalam! Ini adalah bot AI yang menjawab pesan otomatis";
+        } else if (message.body.toLowerCase().startsWith('hai bot' || 'hi bot' || 'halo bot')) {
+            replyText = await handleHaiBot(message);
+        } else if (message.body.toLowerCase().startsWith('draw image' || 'buatkan gambar')) {
+            replyText = await handleDrawImage(message);
         } else if (facebookUrlPattern.test(message.body)) {
-            const url = message.body.match(facebookUrlPattern)[0]; // Ekstrak URL Facebook
-            const apiUrl = `https://api.ryzendesu.vip/api/downloader/aiodown?url=${encodeURIComponent(url)}`;
-            
-            const response = await axios.get(apiUrl);
-            if (response.data.success && response.data.quality.length > 0) {
-                // Prioritaskan resolusi HD, lalu SD
-                const preferredQualities = ['-hd', 'sd'];
-                const videoData = response.data.quality.find(video => 
-                    preferredQualities.includes(video.quality)
-                );
-
-                if (videoData) {
-                    replyText = `Video tersedia dalam kualitas ${videoData.quality.toUpperCase()}. Anda dapat mengunduhnya di sini: ${videoData.url}`;
-                } else {
-                    replyText = 'Maaf, tidak dapat menemukan video dengan kualitas yang diinginkan.';
-                }
-            } else {
-                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
-            }
+            replyText = await handleFacebook(message);
         } else if (youtubeUrlPattern.test(message.body)) {
-            const url = message.body.match(youtubeUrlPattern)[0]; // Ekstrak URL YouTube
-            const apiUrl = `https://api.ryzendesu.vip/api/downloader/ytmp4?url=${encodeURIComponent(url)}`;
-            
-            const response = await axios.get(apiUrl);
-            if (response.data.url) {
-                replyText = `Anda dapat mengunduh video YouTube di sini: ${response.data.url}`;
-            } else {
-                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
-            }
+            replyText = await handleYouTube(message)
         } else if (instagramUrlPattern.test(message.body)) {
-            const url = message.body.match(instagramUrlPattern)[0]; // Ekstrak URL Instagram
-            const apiUrl = `https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`;
-            
-            const response = await axios.get(apiUrl);
-            if (response.data.status && response.data.data.length > 0) {
-                const videoData = response.data.data[0];
-                replyText = `Video tersedia. Anda dapat mengunduhnya di sini: ${videoData.url}`;
-            } else {
-                replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
-            }
+            replyText = await handleInstagram(message)
         } else {
-            return; // If not starting with "Hi Bot" or "draw image", ignore
+            return;
         }
         await message.reply(replyText);
         console.log(replyText)

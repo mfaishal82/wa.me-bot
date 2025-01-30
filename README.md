@@ -30,6 +30,10 @@ This project is a simple WhatsApp bot that uses `wwebjs.dev` and `Herc.ai` to re
     API_KEY=your_api_key_here
     ``` -->
 
+    Get API key from:
+    - https://rapidapi.com/safesite15/api/instagram-downloader-download-instagram-stories-videos4
+    - https://rapidapi.com/vikas5914/api/facebook-reel-and-video-downloader
+
 ## Running the Bot
 To run the bot, use the following command:
     ```
