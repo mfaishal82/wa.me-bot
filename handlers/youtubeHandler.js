@@ -1,28 +1,42 @@
 const axios = require('axios');
 
-async function handleYouTube(message) {
+async function handleYouTube(client, message) {
     const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
-    const url = message.body.match(youtubeUrlPattern)[0]; // Ekstrak URL YouTube
-    const apiUrl = `https://api.ryzendesu.vip/api/downloader/y2mate?url=${encodeURIComponent(url)}`;
+    const url = message.body.match(youtubeUrlPattern)[0];
+
+    const options = {
+        method: 'GET',
+        url: 'https://youtube-video-audio-downloader.p.rapidapi.com/api/v1/youtube-media/info',
+        params: { url: url },
+        headers: {
+            'x-rapidapi-key': process.env.rapid_api_key,
+            'x-rapidapi-host': 'youtube-video-audio-downloader.p.rapidapi.com'
+        }
+    };
 
     try {
-        const response = await axios.get(apiUrl);
-        console.log(response.data.download.dl.mp4);
-        if (response.data.download) {
-            const preferredQualities = ['720p', '480p', '360p', '240p'];
-            const videoData = preferredQualities.map(quality => response.data.download.dl.mp4[quality]).find(video => video && video.url);
+        const response = await axios.request(options);
+        
+        if (response.data.status === 'success') {
+            const videoLinks = response.data.data.links.filter(link => link.type === 'video');
+            let selectedVideo = videoLinks.find(link => link.resolution === '480p');
+            
+            if (!selectedVideo) {
+                selectedVideo = videoLinks.find(link => link.resolution === '360p');
+            }
 
-            if (videoData) {
-                replyText = `Video tersedia dalam kualitas ${preferredQualities.find(quality => response.data.download.dl.mp4[quality] && response.data.download.dl.mp4[quality].url)}. Anda dapat mengunduhnya di sini: ${videoData.url}`;
+            if (selectedVideo) {
+                const replyText = `*${response.data.data.title}*\n\nUploader: ${response.data.data.uploader}\nDurasi: ${response.data.data.duration}\nResolusi: ${selectedVideo.resolution}\n\nLink Download:\n${selectedVideo.download_url}`;
+                await message.reply(replyText);
             } else {
-                replyText = 'Maaf, tidak dapat menemukan video dengan kualitas yang diinginkan.';
+                await message.reply('Maaf, tidak dapat menemukan video dengan kualitas yang diinginkan.');
             }
         } else {
-            replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
+            await message.reply('Maaf, tidak dapat memproses video YouTube tersebut.');
         }
     } catch (error) {
         console.error(error);
-        replyText = 'Terjadi kesalahan saat mencoba mengunduh video.';
+        await message.reply('Terjadi kesalahan saat mencoba mengunduh video.');
     }
 }
 

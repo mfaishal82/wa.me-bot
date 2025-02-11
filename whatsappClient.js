@@ -1,4 +1,4 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageMedia  } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const { Hercai } = require("hercai");
 const axios = require('axios');
@@ -10,13 +10,23 @@ const herc = new Hercai();
 
 const facebookUrlPattern = /https?:\/\/(www\.)?facebook\.com\/.+/;
 const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
-const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/p\/.+/;
+const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+/;
 
 // Create a new client instance
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage', // Mengatasi masalah memori di Heroku
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process', // Mengurangi penggunaan memori
+            '--disable-gpu'
+        ],
+        headless: true // Pastikan mode headless aktif
     }
 });
 
@@ -67,11 +77,21 @@ client.on('message', async (message) => {
         } else if (message.body.toLowerCase().startsWith('hai bot' || 'hi bot' || 'halo bot')) {
             replyText = await handleHaiBot(message);
         } else if (message.body.toLowerCase().startsWith('draw image' || 'buatkan gambar')) {
+            const { Hercai } = require("hercai");
+            const herc = new Hercai();
+
+            async function handleDrawImage(message) {
+                const prompt = message.body.slice(10).trim(); // Extract the prompt after 'draw image'
+                const response = await herc.drawImage({ model: "v3", prompt: prompt, negative_prompt: "" });
+                return `Here is your image: ${response.url}`;
+            }
             replyText = await handleDrawImage(message);
         } else if (facebookUrlPattern.test(message.body)) {
-            replyText = await handleFacebook(message);
+            await handleFacebook(client, message);
+            return
         } else if (youtubeUrlPattern.test(message.body)) {
-            replyText = await handleYouTube(message)
+            await handleYouTube(client, message)
+            return
         } else if (instagramUrlPattern.test(message.body)) {
             replyText = await handleInstagram(message)
         } else {

@@ -1,31 +1,24 @@
 const axios = require('axios');
-const rapid_api_key = process.env.rapid_api_key;
 
 async function handleInstagram(message) {
     const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+/;
     const url = message.body.match(instagramUrlPattern)[0]; // Ekstrak URL Instagram
-    const options = {
-        method: 'GET',
-        url: 'https://instagram-downloader-download-instagram-stories-videos4.p.rapidapi.com/convert',
-        params: { url: url },
-        headers: {
-            'x-rapidapi-key': rapid_api_key,
-            'x-rapidapi-host': 'instagram-downloader-download-instagram-stories-videos4.p.rapidapi.com'
-        }
-    };
+    const apiUrl = `https://api.ryzendesu.vip/api/downloader/igdl?url=${encodeURIComponent(url)}`;
 
     try {
-        const response = await axios.request(options);
-        // console.log(response.data);
-        if (response.data.media) {
-            replyText = `Video tersedia. Anda dapat mengunduhnya di sini: ${response.data.media[0].url}`;
+        const response = await axios.get(apiUrl);
+        // console.log('Response:', response.data);
+        if (response.data.status && response.data.data.length > 0) {
+            replyText = `Video yang anda minta tersedia. Anda dapat mengunduhnya di sini: ${response.data.data[0].url}`;
         } else {
-            replyText = 'Maaf, tidak dapat menemukan video untuk URL yang diberikan.';
+            replyText = 'Maaf, tidak dapat menemukan konten untuk URL yang diberikan.';
         }
     } catch (error) {
         console.error(error);
-        replyText = 'Terjadi kesalahan saat mencoba mengunduh video.';
+        replyText = 'Terjadi kesalahan saat mencoba mengunduh konten.';
     }
+
+    return replyText;
 }
 
 module.exports = handleInstagram;

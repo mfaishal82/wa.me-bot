@@ -2,7 +2,7 @@
   "name": "wa.me-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js"
@@ -16,6 +16,7 @@
     "express": "^4.19.2",
     "hercai": "^12.4.0",
     "nodemon": "^3.1.4",
+    "pm2": "^5.4.3",
     "puppeteer": "^23.4.0",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.25.0"
