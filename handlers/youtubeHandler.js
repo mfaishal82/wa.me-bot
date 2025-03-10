@@ -19,7 +19,7 @@ async function handleYouTube(client, message) {
         
         if (response.data.status === 'success') {
             const videoLinks = response.data.data.links.filter(link => link.type === 'video');
-            let selectedVideo = videoLinks.find(link => link.resolution === '480p');
+            let selectedVideo = videoLinks.find(link => link.resolution === '780p');
             
             if (!selectedVideo) {
                 selectedVideo = videoLinks.find(link => link.resolution === '360p');

@@ -55,7 +55,6 @@ client.on('message', async (message) => {
         });
     }
     
-    // if (message.fromMe) return;
     if (isGroupMsg) return;
     
     // Check if the message has already been processed
@@ -107,3 +106,5 @@ client.on('message', async (message) => {
 
 // Start your client
 client.initialize();
+
+module.exports.client = client;
