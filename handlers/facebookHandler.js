@@ -9,49 +9,47 @@ async function handleFacebook(client, message) {
     // Kirim pesan "sedang diproses" terlebih dahulu
     await message.reply('Permintaan sedang diproses. Harap Tunggu...');
 
-    const options = {
-        method: 'GET',
-        url: 'https://facebook-reel-and-video-downloader.p.rapidapi.com/app/main.php',
-        params: { url: url },
-        headers: {
-            'x-rapidapi-key': rapid_api_key,
-            'x-rapidapi-host': 'facebook-reel-and-video-downloader.p.rapidapi.com'
-        }
-    };
-
     try {
-        const response = await axios.request(options);
-        if (response.data.success && response.data.links) {
-            const preferredQualities = ['Download High Quality', 'Download Low Quality'];
-            const videoUrl = preferredQualities.map(quality => response.data.links[quality]).find(url => url);
+        const response = await axios.get(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(url)}`);
+        
+        if (response.data.status && response.data.data) {
+            const priorityOrder = ['480p', '360p', '720p'];
+            let selectedVideo = null;
 
-            if (videoUrl) {
-                // Unduh video dari URL
+            for (const priority of priorityOrder) {
+                const video = response.data.data.find(v => v.resolution.includes(priority));
+                if (video) {
+                    selectedVideo = video;
+                    break;
+                }
+            }
+
+            if (!selectedVideo && response.data.data.length > 0) {
+                selectedVideo = response.data.data[0];
+            }
+
+            if (selectedVideo) {
+                const videoUrl = selectedVideo.url;
                 const videoResponse = await axios.get(videoUrl, { responseType: 'arraybuffer' });
                 console.log('Video downloaded successfully. Size:', videoResponse.data.length);
 
-                // Batasi ukuran file
-                if (videoResponse.data.length > 16 * 1024 * 1024) { // 16 MB
+                if (videoResponse.data.length > 16 * 1024 * 1024) {
                     await message.reply('Video terlalu besar. Silakan unduh langsung dari link ini: ' + videoUrl);
                     return;
                 }
 
                 const videoData = Buffer.from(videoResponse.data, 'binary').toString('base64');
-                console.log('Video converted to base64.');
+                const media = new MessageMedia('video/mp4', videoData, `Video ${url} ${selectedVideo.resolution}.mp4`);
 
-                // Buat objek MessageMedia
-                const media = new MessageMedia('video/mp4', videoData, `Video ${message.body}.mp4`);
-                console.log('MessageMedia created.');
-
-                // Kirim video sebagai dokumen
-                console.log('Attempting to send media...');
-                await client.sendMessage(message.from, media, { caption: 'Ini adalah video yang Anda minta.', sendMediaAsDocument: true });
-                console.log('Media sent successfully.');
+                await client.sendMessage(message.from, media, { 
+                    caption: `Video Facebook (size ${selectedVideo.resolution}) dari ${url}`, 
+                    sendMediaAsDocument: true 
+                });
             } else {
-                await message.reply('Maaf, tidak dapat menemukan video dengan kualitas yang diinginkan.');
+                await message.reply('Maaf, tidak dapat menemukan video yang sesuai.');
             }
         } else {
-            await message.reply('Maaf, tidak dapat menemukan video untuk URL yang diberikan.');
+            await message.reply('Maaf, tidak dapat mengunduh video dari URL yang diberikan.');
         }
     } catch (error) {
         console.error('Error:', error);

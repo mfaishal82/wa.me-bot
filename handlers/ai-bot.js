@@ -1,9 +1,15 @@
 const axios = require('axios');
+const { API_BASE_URL } = require('../config/api');
 
 async function handleHaiBot(message) {
     try {
-        const response = await axios.get(`https://apidl.asepharyana.cloud/api/ai/claude?text=Jawab respon ini menggunakan bahasa Indonesia: ${message.body}`);
-        return response.data.response;
+        const text = message.body.toLowerCase().startsWith('/bot') 
+            ? message.body.slice(5).trim() 
+            : message.body.slice(3).trim();
+
+        const apiUrl = `${API_BASE_URL}/ai/deepseek?text=${encodeURIComponent(text)}&prompt=Hanya jawab menggunakan bahasa indonesia`;
+        const response = await axios.get(apiUrl);
+        return response.data.answer;
     } catch (error) {
         console.error(error);
         return 'Terjadi kesalahan saat mencoba mendapatkan respon.';

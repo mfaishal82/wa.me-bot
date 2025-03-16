@@ -7,10 +7,16 @@ const handleFacebook = require('./handlers/facebookHandler');
 const handleYouTube = require('./handlers/youtubeHandler');
 const handleInstagram = require('./handlers/instagramHandler');
 const herc = new Hercai();
+const handlePrayerTimes = require('./handlers/prayerHandler');
+const handleTwitter = require('./handlers/twitterHandler');
+const handlePixeldrain = require('./handlers/pixeldrainHandler');
+const handleShortlink = require('./handlers/shortlinkHandler');
 
 const facebookUrlPattern = /https?:\/\/(www\.)?facebook\.com\/.+/;
 const youtubeUrlPattern = /https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+|https?:\/\/youtu\.be\/[\w-]+/;
 const instagramUrlPattern = /https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[\w-]+/;
+const twitterUrlPattern = /https?:\/\/((?:x|twitter)\.com)\/.+/;
+const pixeldrainPattern = /https?:\/\/(www\.)?pixeldrain\.com\/(u|l)\/[\w-]+/;
 
 // Create a new client instance
 const client = new Client({
@@ -73,9 +79,11 @@ client.on('message', async (message) => {
             replyText = 'I am just a bot, but I am here to help you!';
         } else if (message.body.toLowerCase() === "assalamu'alaikum" || message.body.toLowerCase() === "assalamualaikum" || message.body.toLowerCase() === "assalamualaikum warahmatullahi wabarakatuh") {
             replyText = "Wa'alaikumussalam! Ini adalah bot AI yang menjawab pesan otomatis";
-        } else if (message.body.toLowerCase().startsWith('hai bot' || 'hi bot' || 'halo bot')) {
+        } else if (message.body.toLowerCase().startsWith('/short')) {
+            replyText = await handleShortlink(message);
+        } else if (message.body.toLowerCase().startsWith('/bot' || 'ai')) {
             replyText = await handleHaiBot(message);
-        } else if (message.body.toLowerCase().startsWith('draw image' || 'buatkan gambar')) {
+        } else if (message.body.toLowerCase().startsWith('/draw')) {
             const { Hercai } = require("hercai");
             const herc = new Hercai();
 
@@ -88,6 +96,14 @@ client.on('message', async (message) => {
         } else if (facebookUrlPattern.test(message.body)) {
             await handleFacebook(client, message);
             return
+        } else if (message.body.toLowerCase().startsWith('/azan ')) {
+            replyText = await handlePrayerTimes(message);
+        } else if (pixeldrainPattern.test(message.body)) {
+            await handlePixeldrain(client, message);
+            return;
+        } else if (twitterUrlPattern.test(message.body)) {
+            await handleTwitter(client, message);
+            return;
         } else if (youtubeUrlPattern.test(message.body)) {
             await handleYouTube(client, message)
             return
